@@ -61,7 +61,7 @@ graph TD
   RootAgent -->|Delegate| Fin[Finance Agent]
   RootAgent -->|Delegate| Leg[Legal Agent]
 
-  subgraph MCP Framework (Model Context Protocol)
+  subgraph "MCP Framework (Model Context Protocol)"
     Auto & Maint & Fin & Leg -->|Query Tools| MCPHost[FastMCP Server]
     MCPHost -->|Expose Tool Schemas| Tools[tools.py]
   end
