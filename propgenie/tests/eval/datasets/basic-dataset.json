@@ -1,0 +1,32 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "overdue_tenants_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Who has not paid rent yet?"}]
+      }
+    },
+    {
+      "eval_case_id": "log_expense_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Log a Rs 4,500 plumbing expense for Flat 3B"}]
+      }
+    },
+    {
+      "eval_case_id": "create_ticket_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Create a maintenance ticket for Priya Patel: her washbasin is clogged"}]
+      }
+    },
+    {
+      "eval_case_id": "financial_report_query",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Show me the financial P&L report for this month"}]
+      }
+    }
+  ]
+}

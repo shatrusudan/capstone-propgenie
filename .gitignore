@@ -1,0 +1,24 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.ty_cache/
+propgenie/db.json
+propgenie/artifacts/
+
+# Node
+node_modules/
+dist/
+.eslintcache
+
+# IDE / System
+.DS_Store
+.vscode/
+.idea/
+.gemini/
+*~
+*.swp
