@@ -44,7 +44,11 @@ PropGenie is an intelligent, autonomous property management system designed to c
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & Model Context Protocol (MCP)
+
+PropGenie utilizes the **Model Context Protocol (MCP)** to expose python operation schemas directly to the LLM agent workspace. The system separates high-level intent orchestration, specialist tool coordination, and persistence drivers.
+
+### System Diagram
 
 ```mermaid
 graph TD
@@ -57,9 +61,46 @@ graph TD
   RootAgent -->|Delegate| Fin[Finance Agent]
   RootAgent -->|Delegate| Leg[Legal Agent]
 
-  Auto & Maint & Fin & Leg -->|Invoke| Tools[Tools & FastMCP Server]
+  subgraph MCP Framework (Model Context Protocol)
+    Auto & Maint & Fin & Leg -->|Query Tools| MCPHost[FastMCP Server]
+    MCPHost -->|Expose Tool Schemas| Tools[tools.py]
+  end
+
   Tools -->|Read / Write| Firestore[(GCP Cloud Firestore)]
   Tools -->|Fallbacks| DB[local db.json]
+```
+
+### 📩 Send Notification Agent Flow
+
+When a user requests a rent payment reminder or lease warning, the multi-agent system executes the following sequential pipeline:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User as Property Owner / UI
+  participant Coord as Root Coordinator Agent
+  participant Auto as Automation Agent
+  participant MCP as FastMCP Server
+  participant FS as Cloud Firestore (propgenie)
+  participant Ch as Channels (WhatsApp/Gmail)
+
+  User->>Coord: "Send rent reminder to Sudan"
+  Coord->>Coord: Identifies "Notification/Reminder" intent
+  Coord->>Auto: Delegates task to Automation Specialist
+  Auto->>MCP: Call get_overdue_tenants()
+  MCP->>FS: Fetch tenant records where status = "Overdue"
+  FS-->>MCP: Returns tenant info (Sudan, Flat 304, ₹15,000, +91...)
+  MCP-->>Auto: Overdue tenants list
+  Auto->>MCP: Call generate_payment_link(Sudan, 15000)
+  MCP-->>Auto: Returns Razorpay link (https://rzp.io/i/pay_sudan_15000)
+  Auto->>MCP: Call send_whatsapp_message(recipient, message_text)
+  MCP->>Ch: Dispatches simulated SMS/WhatsApp message
+  Auto->>MCP: Call send_email_notification(recipient, subject, body)
+  MCP->>Ch: Dispatches simulated Gmail notification
+  Auto->>MCP: Call create_calendar_event()
+  MCP->>FS: Records reminder timestamp in calendar collection
+  Auto-->>Coord: "Reminders successfully dispatched to Sudan"
+  Coord-->>User: "WhatsApp and Email payment warnings sent to Sudan with link!"
 ```
 
 ---
