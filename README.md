@@ -46,29 +46,44 @@ PropGenie is an intelligent, autonomous property management system designed to c
 
 ## 🏗️ Architecture & Model Context Protocol (MCP)
 
-PropGenie utilizes the **Model Context Protocol (MCP)** to expose python operation schemas directly to the LLM agent workspace. The system separates high-level intent orchestration, specialist tool coordination, and persistence drivers.
+PropGenie utilizes the **Model Context Protocol (MCP)** to decouple our LLM coordinator agent and specialist sub-agents from direct business logic tools. The system separates intent routing, action execution, and data persistence:
 
-### System Diagram
+1. **Root Coordinator Agent**: Interprets natural language requests and routes intents to specialized sub-agents.
+2. **Specialist Sub-Agents**: Formulate planning sequences to fulfill the domain request (e.g. `automation_agent` orchestrates reminders).
+3. **FastMCP Server (`mcp_server.py`)**: Runs as a separate process serving as the MCP host. It dynamically translates python functions in `tools.py` into standardized JSON schemas, making them discoverable and callable by the agents.
+4. **Cloud Firestore / Local JSON**: Serves as the persistent database layer for the MCP server.
+
+### System design & MCP Integration Diagram
 
 ```mermaid
 graph TD
-  UI[Vite React Frontend] -->|REST API| API[FastAPI Web Server]
-  API -->|Session Manager| AGY[ADY Multi-Agent Orchestrator]
-  AGY -->|Route Intents| RootAgent[Root Coordinator Agent]
+  UI[Vite React Frontend] -->|REST API Requests| API[FastAPI Web Server]
+  API -->|Converse Session Context| AGY[ADY Agent Orchestrator]
+  AGY -->|Parse Natural Language Intents| RootAgent[Root Coordinator Agent]
   
-  RootAgent -->|Delegate| Auto[Automation Agent]
-  RootAgent -->|Delegate| Maint[Maintenance Agent]
-  RootAgent -->|Delegate| Fin[Finance Agent]
-  RootAgent -->|Delegate| Leg[Legal Agent]
+  RootAgent -->|Delegate Intent| Auto[Automation Agent]
+  RootAgent -->|Delegate Intent| Maint[Maintenance Agent]
+  RootAgent -->|Delegate Intent| Fin[Finance Agent]
+  RootAgent -->|Delegate Intent| Leg[Legal Agent]
 
-  subgraph "MCP Framework (Model Context Protocol)"
-    Auto & Maint & Fin & Leg -->|Query Tools| MCPHost[FastMCP Server]
-    MCPHost -->|Expose Tool Schemas| Tools[tools.py]
+  subgraph "FastMCP Server (Model Context Protocol Host)"
+    Auto & Maint & Fin & Leg -->|Standardized Tool Invocation| MCPHost[mcp_server.py]
+    MCPHost -->|Exposes Python Methods| Tools[tools.py]
   end
 
-  Tools -->|Read / Write| Firestore[(GCP Cloud Firestore)]
-  Tools -->|Fallbacks| DB[local db.json]
+  subgraph "Real-World Channels & Side-Effects"
+    Tools -->|WhatsApp API| WA["WhatsApp Channel (SMS Alerts)"]
+    Tools -->|Gmail SMTP| Email["Email Channel (Invoices/Contracts)"]
+    Tools -->|Calendar Logging| Cal["Calendar Events (Rent Reminders)"]
+  end
+
+  subgraph "Persistence Layer"
+    Tools -->|Read / Write Collections| Firestore[(GCP Cloud Firestore)]
+    Tools -->|Failover Backup| DB[local db.json]
+  end
 ```
+
+---
 
 ### 📩 Send Notification Agent Flow
 
