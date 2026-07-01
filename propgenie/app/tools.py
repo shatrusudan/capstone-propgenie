@@ -440,6 +440,7 @@ def create_calendar_event(
 
     # Sync to real Google Calendar if configured
     calendar_id = os.environ.get("CALENDAR_ID")
+    gmail_user = os.environ.get("GMAIL_USER")
     if calendar_id and calendar_service:
         try:
             body = {
@@ -452,9 +453,12 @@ def create_calendar_event(
                     "date": start_date,
                 },
             }
+            if gmail_user:
+                body["attendees"] = [{"email": gmail_user}]
+
             res = (
                 calendar_service.events()
-                .insert(calendarId=calendar_id, body=body)
+                .insert(calendarId=calendar_id, body=body, sendUpdates="all")
                 .execute()
             )
             log_audit_action(
