@@ -458,6 +458,16 @@ async def receive_whatsapp_webhook(request: Request) -> dict[str, str]:
         return {"status": "error", "detail": str(e)}
 
 
+# Serve React frontend static files
+from fastapi.staticfiles import StaticFiles
+
+frontend_dist = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../frontend_dist")
+)
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+
+
 # Main execution
 if __name__ == "__main__":
     import uvicorn

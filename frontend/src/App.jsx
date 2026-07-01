@@ -9,7 +9,7 @@ import ContractsView from './components/ContractsView';
 import LegalView from './components/LegalView';
 import LogsView from './components/LogsView';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : 'http://localhost:8000';
 
 const DEFAULT_GREETING = "Hi! I am PropGenie, your AI property management coordinator. Ask me to find overdue tenants, log rent payments, record repair expenses, or create maintenance tickets!";
 

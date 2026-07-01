@@ -36,6 +36,15 @@ check_or_create_secret "gmail-user" "Gmail/Google account email address"
 check_or_create_secret "gmail-app-password" "Gmail App Password for SMTP alerts"
 check_or_create_secret "calendar-id" "Google Calendar ID to write appointments"
 
+# 2.5 Build React frontend and copy to build context
+echo "Building React frontend application..."
+cd ../frontend
+npm install
+VITE_API_BASE_URL="" npm run build
+cd ../propgenie
+rm -rf frontend_dist
+cp -r ../frontend/dist ./frontend_dist
+
 # 3. Build container via Cloud Build
 echo "Submitting build to Google Cloud Build..."
 gcloud builds submit --tag "gcr.io/$PROJECT_ID/$SERVICE_NAME:latest" .
