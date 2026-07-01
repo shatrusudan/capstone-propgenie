@@ -3,7 +3,19 @@ import os
 import sys
 from typing import Any
 
+import google.auth
 from google.cloud.firestore import Client
+from googleapiclient.discovery import build
+
+# Setup Google Calendar Service Client globally (optional auth fallback)
+calendar_service = None
+try:
+    credentials, project = google.auth.default(
+        scopes=["https://www.googleapis.com/auth/calendar.events"]
+    )
+    calendar_service = build("calendar", "v3", credentials=credentials)
+except Exception:
+    pass
 
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../db.json"))
 
@@ -426,14 +438,45 @@ def create_calendar_event(
     db["calendar_events"].append(event)
     _save_db(db)
 
+    # Sync to real Google Calendar if configured
+    calendar_id = os.environ.get("CALENDAR_ID")
+    if calendar_id and calendar_service:
+        try:
+            body = {
+                "summary": title,
+                "description": description,
+                "start": {
+                    "date": start_date,
+                },
+                "end": {
+                    "date": start_date,
+                },
+            }
+            res = (
+                calendar_service.events()
+                .insert(calendarId=calendar_id, body=body)
+                .execute()
+            )
+            log_audit_action(
+                "CREATE_CALENDAR_EVENT",
+                f"Created real Google Calendar event {res.get('id')} for {start_date}.",
+            )
+            return {
+                "status": "success",
+                "message": f"Real Google Calendar event created with ID: {res.get('id')}",
+                "event": event,
+            }
+        except Exception as e:
+            print(f"[CALENDAR API] Error creating event: {e}", file=sys.stderr)
+
     log_audit_action(
         "CREATE_CALENDAR_EVENT",
-        f"Created Google Calendar event '{title}' for {start_date}.",
+        f"Created simulated calendar event '{title}' for {start_date}.",
     )
 
     return {
         "status": "success",
-        "message": f"Calendar event '{title}' successfully scheduled for {start_date}.",
+        "message": f"Simulated calendar event '{title}' scheduled for {start_date}.",
         "event": event,
     }
 
@@ -502,21 +545,50 @@ def generate_payment_link(tenant_name: str, amount: float) -> dict[str, Any]:
 def send_email_notification(
     recipient_email: str, subject: str, body: str
 ) -> dict[str, Any]:
-    """Sends an email notification (statements, lease agreements, formal notices) via the Gmail API.
+    """Sends an email notification (statements, lease agreements, formal notices) via Gmail SMTP or API.
 
     Args:
         recipient_email: The recipient's email address.
         subject: The email subject line.
         body: The body content of the email.
     """
-    # Simulated Gmail dispatch
+    import smtplib
+    from email.mime.text import MIMEText
+
+    gmail_user = os.environ.get("GMAIL_USER")
+    gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
+
+    if gmail_user and gmail_password:
+        try:
+            msg = MIMEText(body)
+            msg["Subject"] = subject
+            msg["From"] = gmail_user
+            msg["To"] = recipient_email
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(gmail_user, gmail_password)
+                server.sendmail(gmail_user, recipient_email, msg.as_string())
+
+            log_audit_action(
+                "SEND_EMAIL",
+                f"Sent real email to {recipient_email} (Subject: {subject}).",
+            )
+            return {
+                "status": "success",
+                "message": f"Real email successfully sent to {recipient_email}.",
+            }
+        except Exception as e:
+            print(f"[GMAIL SMTP] Error sending email: {e}", file=sys.stderr)
+
+    # Simulated Gmail dispatch fallback
     print(
-        f"[GMAIL API Dispatch] Sending Email to {recipient_email} - Subject: {subject}",
+        f"[GMAIL API Dispatch] Sending simulated email to {recipient_email} - Subject: {subject}",
         file=sys.stderr,
     )
 
     log_audit_action(
-        "SEND_EMAIL", f"Sent email to {recipient_email} (Subject: {subject})."
+        "SEND_EMAIL",
+        f"Sent simulated email to {recipient_email} (Subject: {subject}).",
     )
 
     return {
