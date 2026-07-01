@@ -465,6 +465,8 @@ frontend_dist = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../frontend_dist")
 )
 if os.path.exists(frontend_dist):
+    # Clear default root redirect route from ADK setup to serve React index.html
+    app.routes = [r for r in app.routes if r.path != "/"]
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 
