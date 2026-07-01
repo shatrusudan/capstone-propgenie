@@ -47,8 +47,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform managed \
   --region "$REGION" \
   --allow-unauthenticated \
-  --update-env-vars "GMAIL_USER=backend@propgenie.com" \
-  --update-secrets "GMAIL_APP_PASSWORD=gmail-app-password:latest,CALENDAR_ID=calendar-id:latest" \
+  --update-secrets "GMAIL_USER=gmail-user:latest,GMAIL_APP_PASSWORD=gmail-app-password:latest,CALENDAR_ID=calendar-id:latest" \
   --memory "2Gi" \
   --cpu "1"
 
